@@ -4,6 +4,14 @@ from board import Board
 from pieces import *
 
 
+def show_possible_moves(surface: Surface | SurfaceType, square_size: int, board: Board, piece: Piece):
+    possible_moves: list[(int, int)] = piece.get_possible_moves(board.pieces)
+    for move in possible_moves:
+        pygame.draw.circle(surface, (200, 200, 200),
+                           (move[0] * square_size + 0.5 * square_size, (7 - move[1]) * square_size + 0.5 * square_size),
+                           0.15 * square_size)
+
+
 def draw_board():
     pygame.init()
 
@@ -17,8 +25,6 @@ def draw_board():
 
     board: Board = Board(surface)
     board.draw_pieces(surface)
-
-    counter = 0
 
     piece_to_move: Piece | None = None
 
@@ -36,13 +42,8 @@ def draw_board():
 
         if piece_to_move:
             board.move_piece_to_coordinates(surface, piece_to_move, pygame.mouse.get_pos())
+            show_possible_moves(surface, square_size, board, piece_to_move)
             pygame.display.flip()
-
-        # counter += 1
-        # if counter == 1_000_000:
-        #     board.move_piece_to_position(surface, (0, 1), (0, 3))
-        # elif counter == 2_000_000:
-        #     board.delete_piece(surface, (0, 0))
 
 
 if __name__ == "__main__":

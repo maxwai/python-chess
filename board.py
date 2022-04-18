@@ -1,5 +1,3 @@
-from pygame.rect import Rect, RectType
-
 from pieces import *
 
 colors = [(238, 238, 210), (118, 150, 86)]
@@ -42,13 +40,16 @@ class Board:
         self.pieces.append(Queen(Team.BLACK, 4, 7, self.square_size))
 
         self.squares: dict[(int, int): Rect | RectType] = dict()
+        self.draw_squares(surface)
+
+    def get_square(self, x: int, y: int) -> (int, int, int, int):
+        return x * self.square_size, (7 - y) * self.square_size, self.square_size, self.square_size
+
+    def draw_squares(self, surface: Surface | SurfaceType):
         for row in range(8):
             for col in range(8):
                 self.squares[(row, col)] = surface.fill(get_square_color(row, col), self.get_square(row, col))
                 pygame.display.update(self.squares[(row, col)])
-
-    def get_square(self, x: int, y: int) -> (int, int, int, int):
-        return x * self.square_size, (7 - y) * self.square_size, self.square_size, self.square_size
 
     def draw_pieces(self, surface: Surface | SurfaceType):
         for piece in self.pieces:
@@ -66,7 +67,8 @@ class Board:
                 return piece
         return None
 
-    def move_piece_to_coordinates(self, surface: Surface | SurfaceType, piece_to_move: Piece, new_position: (float, float)):
+    def move_piece_to_coordinates(self, surface: Surface | SurfaceType, piece_to_move: Piece,
+                                  new_position: (float, float)):
         for (position, square) in self.squares.items():
             square: Rect | RectType
             if square.colliderect(piece_to_move.rect):
@@ -79,19 +81,15 @@ class Board:
         piece_to_move.move_image(surface, new_position, update=False)
 
     def snap_to_position(self, surface: Surface | SurfaceType, piece_to_move: Piece, new_position: (float, float)):
-        self.move_piece_to_coordinates(surface, piece_to_move, pygame.mouse.get_pos())
-        for (position, square) in self.squares.items():
-            square: Rect | RectType
-            if square.colliderect(piece_to_move.rect):
-                self.squares[position] = surface.fill(get_square_color(*position),
-                                                      self.get_square(*position))
-                possible_piece = self.get_piece_at_position(*position)
-                if possible_piece:
-                    possible_piece.add_image(surface, update=False)
-
         for (position, square) in self.squares.items():
             if square.collidepoint(new_position):
-                piece_to_move.set_position(surface, position, update=False)
+                possible_moves: list[(int, int)] = piece_to_move.get_possible_moves(self.pieces)
+                piece_to_move.set_position(surface,
+                                           position if (position in possible_moves) else piece_to_move.get_position(),
+                                           update=False)
+                # TODO: add capture
+        self.draw_squares(surface)
+        self.draw_pieces(surface)
 
     def move_piece_to_position(self, surface: Surface | SurfaceType, current_position: (int, int),
                                new_position: (int, int)):
